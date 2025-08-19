@@ -9,17 +9,34 @@ import (
 
 func main() {
 	port := os.Getenv("PORT")
-
 	if port == "" {
-		port = "8080"
+		port = "8080" // 默认端口，方便本地调试
 	}
 
-	http.HandleFunc("/", HelloHandler)
+	http.HandleFunc("/", HomeHandler)
 
 	log.Println("Listening on port", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func HelloHandler(w http.ResponseWriter, _ *http.Request) {
-	fmt.Fprintf(w, "Hello from Koyeb\n")
+func HomeHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html") // 设置响应类型为 HTML
+
+	// 输出 HTML 内容
+	fmt.Fprint(w, `
+		<!DOCTYPE html>
+		<html>
+		<head>
+			<title>欢迎访问我的网站</title>
+			<style>
+				body { font-family: Arial, sans-serif; background: #f4f4f4; text-align: center; padding-top: 100px; }
+				h1 { color: #333; }
+			</style>
+		</head>
+		<body>
+			<h1>Hello from Koyeb 👋</h1>
+			<p>这是一个简单的网页，由 Go 编写并部署。</p>
+		</body>
+		</html>
+	`)
 }
