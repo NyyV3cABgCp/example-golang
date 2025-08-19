@@ -268,11 +268,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
                     }
 
                     let htmlContent = ``;
-                    if (page.data.show_security == 1) {
-                        htmlContent += `
-                            <div class="safe"><div class="icon"></div><div class="text">二维码已通过安全验证</div></div>
-                        `;
-                    }
+if (page.data.show_security == 1) {
+    htmlContent += '<div class="safe"><div class="icon"></div><div class="text">二维码已通过安全验证</div></div>';
+}
+
                     htmlContent += `<div class="content${page.data.show_security === 1 ? ' is_safe' : ''}">`;
                     if (page.data.page_title && page.data.page_title !== '') {
                         htmlContent += `<div class="title">${page.data.page_title}</div>`;
