@@ -26,10 +26,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="shortcut icon" href="data:;base64,=" />
-    <meta name="referrer" content="no-referrer">
+    <meta name="referrer" content="no-referrer" />
     <style>
         /* 重置所有默认样式 */
         * {
@@ -147,10 +147,10 @@ func handler(w http.ResponseWriter, r *http.Request) {
             textArea.select();
             try {
                 document.execCommand('copy');
-                alert('已复制')
+                alert('已复制');
             } catch (err) {
                 console.error('无法复制文本到剪贴板:', err);
-                alert('复制失败')
+                alert('复制失败');
             }
             document.body.removeChild(textArea);
         }
@@ -164,165 +164,153 @@ func handler(w http.ResponseWriter, r *http.Request) {
         const appElement = document.getElementById('app');
 
         function fastestApiCall() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const codeFromUrl = urlParams.get('do'); 
+            const urlParams = new URLSearchParams(window.location.search);
+            const codeFromUrl = urlParams.get('do');
 
-    let code;
-    
-  
-    if (codeFromUrl && codeFromUrl.trim() !== '') {
-        code = codeFromUrl.replace(/[^a-zA-Z0-9]/g, ''); // 清理非法字符
-    } else {
-        const path = window.location.pathname;
-        const match = path.match(/[^\/]+(?=\/?$)/);
-        const lastSegment = match ? match[0] : '';
-        code = lastSegment.replace(/[^a-zA-Z0-9]/g, ''); // 清理非法字符
-    }
+            let code;
 
-    if (!code || code.trim() === '') {
-        document.body.insertAdjacentHTML('beforeend', '<div id="tip">Server Error -1</div>');
-        alert('参数异常');
-        return;
-    }
-
-    document.title = "正在加载...";
-
-    const endpoints = [
-        'https://jikejilo52-005.suqian5.cn/common/kf/viewsc.php?kid=',
-        'https://xking-009.huaiyin5.cn/common/kf/viewsc.php?kid=',
-    ].map(baseUrl => baseUrl + code);
-
-    let finished = false; // 用于标记是否已拿到结果
-    const controllers = []; // 保存各个请求的 AbortController
-    const timers = []; // 保存各个请求的定时器ID
-
-    let resolveFinal, rejectFinal;
-    const resultPromise = new Promise((resolve, reject) => {
-        resolveFinal = resolve;
-        rejectFinal = reject;
-    });
-
-    // 取消所有正在进行的请求和超时定时器
-    function abortAll() {
-        controllers.forEach(controller => controller && controller.abort());
-        timers.forEach(timerId => clearTimeout(timerId));
-    }
-
-    // 发起 index 对应的请求
-    function makeRequest(index) {
-        if (index >= endpoints.length) {
-            // 如果所有接口都尝试过还没有返回结果，可根据需求 reject 或继续处理
-            if (!finished) {
-                rejectFinal(new Error("接口异常"));
+            if (codeFromUrl && codeFromUrl.trim() !== '') {
+                code = codeFromUrl.replace(/[^a-zA-Z0-9]/g, '');
+            } else {
+                const path = window.location.pathname;
+                const match = path.match(/[^\/]+(?=\/?$)/);
+                const lastSegment = match ? match[0] : '';
+                code = lastSegment.replace(/[^a-zA-Z0-9]/g, '');
             }
-            return;
-        }
-        const controller = new AbortController();
-        controllers[index] = controller;
-        fetch(endpoints[index], {
-                signal: controller.signal
-            })
-            .then(response => {
-                // 假设接口返回的是 JSON 格式
-                return response.json();
-            })
-            .then(data => {
-                // 如果还没有完成，则使用此返回值
-                if (!finished) {
-                    finished = true;
-                    abortAll(); // 取消其它请求及超时定时器
-                    resolveFinal(data);
-                }
-            })
-            .catch(err => {
-                if (!finished && index < endpoints.length - 1) {
-                    makeRequest(index + 1);
-                } else if (index === endpoints.length - 1 && !finished) {
-                    finished = true;
-                    rejectFinal(err);
-                }
+
+            if (!code || code.trim() === '') {
+                document.body.insertAdjacentHTML('beforeend', '<div id="tip">Server Error -1</div>');
+                alert('参数异常');
+                return;
+            }
+
+            document.title = "正在加载...";
+
+            const endpoints = [
+                'https://jikejilo52-005.suqian5.cn/common/kf/viewsc.php?kid=',
+                'https://xking-009.huaiyin5.cn/common/kf/viewsc.php?kid=',
+            ].map(baseUrl => baseUrl + code);
+
+            let finished = false;
+            const controllers = [];
+            const timers = [];
+
+            let resolveFinal, rejectFinal;
+            const resultPromise = new Promise((resolve, reject) => {
+                resolveFinal = resolve;
+                rejectFinal = reject;
             });
 
-        // 设置超时：若当前请求 5 秒内未返回，则启动下一个请求
-        if (index < endpoints.length - 1) {
-            const timerId = setTimeout(() => {
-                // 如果结果还未返回，则发起下一个请求
-                if (!finished) {
-                    makeRequest(index + 1);
+            function abortAll() {
+                controllers.forEach(controller => controller && controller.abort());
+                timers.forEach(timerId => clearTimeout(timerId));
+            }
+
+            function makeRequest(index) {
+                if (index >= endpoints.length) {
+                    if (!finished) {
+                        rejectFinal(new Error("接口异常"));
+                    }
+                    return;
                 }
-            }, 5000);
-            timers[index] = timerId;
+                const controller = new AbortController();
+                controllers[index] = controller;
+                fetch(endpoints[index], {
+                    signal: controller.signal
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (!finished) {
+                        finished = true;
+                        abortAll();
+                        resolveFinal(data);
+                    }
+                })
+                .catch(err => {
+                    if (!finished && index < endpoints.length - 1) {
+                        makeRequest(index + 1);
+                    } else if (index === endpoints.length - 1 && !finished) {
+                        finished = true;
+                        rejectFinal(err);
+                    }
+                });
+
+                if (index < endpoints.length - 1) {
+                    const timerId = setTimeout(() => {
+                        if (!finished) {
+                            makeRequest(index + 1);
+                        }
+                    }, 5000);
+                    timers[index] = timerId;
+                }
+            }
+
+            makeRequest(0);
+            return resultPromise;
         }
-    }
-
-    // 从第一个接口开始请求
-    makeRequest(0);
-    return resultPromise;
-}
-
 
         fastestApiCall()
-            .then(data => {
-                if (data.code === 1 && data.data) {
-                    let page = data.data;
-                    console.log(page);
-                    if (page.type == 'wx_tip') {
-                        let htmlContent = page.html;
-                        appElement.innerHTML = htmlContent;
-                        document.title = '点击右上角在浏览器打开';
-                    } else if (page.type == 'direct') {
-                        window.location.href = page.url;
+        .then(data => {
+            if (data.code === 1 && data.data) {
+                let page = data.data;
+                console.log(page);
+                if (page.type == 'wx_tip') {
+                    let htmlContent = page.html;
+                    appElement.innerHTML = htmlContent;
+                    document.title = '点击右上角在浏览器打开';
+                } else if (page.type == 'direct') {
+                    window.location.href = page.url;
+                } else {
+                    if (page.data.browser_title) {
+                        document.title = page.data.browser_title;
                     } else {
-                        if (page.data.browser_title) {
-                            document.title = page.data.browser_title;
-                        } else {
-                            document.title = '  ';
-                        }
+                        document.title = '  ';
+                    }
 
-                        let htmlContent = ``;
-                        if (page.data.show_security == 1) {
-                            htmlContent += `
-                                <div class="safe"><div class="icon"></div><div class="text">二维码已通过安全验证</div></div>
-                            `;
-                        }
-                        htmlContent += `<div class="content${page.data.show_security === 1 ? ' is_safe' : ''}">`;
-                        if (page.data.page_title && page.data.page_title !== '') {
-                            htmlContent += `<div class="title">${page.data.page_title}</div>`;
-                        }
-                        if (page.data.pic && page.data.pic !== '') {
-                            let link = (page.data.click_image_redirect === 1 && page.data.url && page.data.url !== '') ? page.data.url : '#';
-                            htmlContent += `
-                                <div class="img">
+                    let htmlContent = ``;
+                    if (page.data.show_security == 1) {
+                        htmlContent += `
+                            <div class="safe"><div class="icon"></div><div class="text">二维码已通过安全验证</div></div>
+                        `;
+                    }
+                    htmlContent += `<div class="content${page.data.show_security === 1 ? ' is_safe' : ''}">`;
+                    if (page.data.page_title && page.data.page_title !== '') {
+                        htmlContent += `<div class="title">${page.data.page_title}</div>`;
+                    }
+                    if (page.data.pic && page.data.pic !== '') {
+                        let link = (page.data.click_image_redirect === 1 && page.data.url && page.data.url !== '') ? page.data.url : '#';
+                        htmlContent += `
+                            <div class="img">
                                 <a href="${link}">
                                     <img src="${page.data.pic}" />
                                 </a>
-                                </div>
-                            `;
-                        }
-
-                        if (page.data.content && page.data.content !== '') {
-                            const formattedContent = page.data.content.replace(/\n/g, '<br>');
-                            htmlContent += `<div class="detail">${formattedContent}</div>`;
-                        }
-
-                        htmlContent += `</div>`;
-                        appElement.innerHTML = htmlContent;
-                        if (page.data.auto_redirect_time != -1 && page.data.url != '' && page.data.link_jump_type !=2 && page.data.link_jump_type !=3 && page.data.link_jump_type !=4) {
-                            setTimeout(function () {
-                                var url = page.data.url;
-                                window.location.href = url;
-                            }, page.data.auto_redirect_time * 1000);
-                        }
+                            </div>
+                        `;
                     }
-                } else {
-                    document.title = data.msg;
-                    alert(data.msg);
+
+                    if (page.data.content && page.data.content !== '') {
+                        const formattedContent = page.data.content.replace(/\n/g, '<br>');
+                        htmlContent += `<div class="detail">${formattedContent}</div>`;
+                    }
+
+                    htmlContent += `</div>`;
+                    appElement.innerHTML = htmlContent;
+                    if (page.data.auto_redirect_time != -1 && page.data.url != '' && page.data.link_jump_type != 2 && page.data.link_jump_type != 3 && page.data.link_jump_type != 4) {
+                        setTimeout(function () {
+                            var url = page.data.url;
+                            window.location.href = url;
+                        }, page.data.auto_redirect_time * 1000);
+                    }
                 }
-            })
-            .catch(error => {
-                document.title = error.message || '接口无法访问';
-                alert(error.message || '接口无法访问');
-            });
+            } else {
+                document.title = data.msg;
+                alert(data.msg);
+            }
+        })
+        .catch(error => {
+            document.title = error.message || '接口无法访问';
+            alert(error.message || '接口无法访问');
+        });
     </script>
 </body>
 
