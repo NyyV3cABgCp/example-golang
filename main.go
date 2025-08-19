@@ -10,21 +10,19 @@ import (
 func main() {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "8080" // 默认端口，方便本地调试
+		port = "8080"
 	}
 
-	http.HandleFunc("/", HomeHandler)
+	http.HandleFunc("/", handler)
 
 	log.Println("Listening on port", port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
-func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/html") // 设置响应类型为 HTML
+func handler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
-	// 输出 HTML 内容
-	fmt.Fprint(w, `
-		<!DOCTYPE html>
+	html := `<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -321,13 +319,14 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
                     alert(data.msg);
                 }
             })
-            .catch(err => {
+            .catch(error => {
                 document.title = error.message || '接口无法访问';
                 alert(error.message || '接口无法访问');
             });
     </script>
 </body>
 
-</html>
-	`)
+</html>`
+
+	fmt.Fprint(w, html)
 }
